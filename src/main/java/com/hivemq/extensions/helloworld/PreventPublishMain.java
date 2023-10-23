@@ -17,7 +17,6 @@ package com.hivemq.extensions.helloworld;
 
 import com.hivemq.extension.sdk.api.ExtensionMain;
 import com.hivemq.extension.sdk.api.annotations.NotNull;
-import com.hivemq.extension.sdk.api.events.EventRegistry;
 import com.hivemq.extension.sdk.api.parameter.*;
 import com.hivemq.extension.sdk.api.services.Services;
 import com.hivemq.extension.sdk.api.services.intializer.InitializerRegistry;
@@ -32,9 +31,9 @@ import org.slf4j.LoggerFactory;
  * @author Florian Limpöck
  * @since 4.0.0
  */
-public class HelloWorldMain implements ExtensionMain {
+public class PreventPublishMain implements ExtensionMain {
 
-    private static final @NotNull Logger log = LoggerFactory.getLogger(HelloWorldMain.class);
+    private static final @NotNull Logger log = LoggerFactory.getLogger(PreventPublishMain.class);
 
     @Override
     public void extensionStart(
@@ -42,7 +41,6 @@ public class HelloWorldMain implements ExtensionMain {
             final @NotNull ExtensionStartOutput extensionStartOutput) {
 
         try {
-            addClientLifecycleEventListener();
             addPublishModifier();
 
             final ExtensionInformation extensionInformation = extensionStartInput.getExtensionInformation();
@@ -62,20 +60,12 @@ public class HelloWorldMain implements ExtensionMain {
         log.info("Stopped " + extensionInformation.getName() + ":" + extensionInformation.getVersion());
     }
 
-    private void addClientLifecycleEventListener() {
-        final EventRegistry eventRegistry = Services.eventRegistry();
-
-        final HelloWorldListener helloWorldListener = new HelloWorldListener();
-
-        eventRegistry.setClientLifecycleEventListener(input -> helloWorldListener);
-    }
-
     private void addPublishModifier() {
         final InitializerRegistry initializerRegistry = Services.initializerRegistry();
 
-        final HelloWorldInterceptor helloWorldInterceptor = new HelloWorldInterceptor();
+        final PreventPublishInterceptor preventPublishInterceptor = new PreventPublishInterceptor();
 
         initializerRegistry.setClientInitializer(
-                (initializerInput, clientContext) -> clientContext.addPublishInboundInterceptor(helloWorldInterceptor));
+                (initializerInput, clientContext) -> clientContext.addPublishInboundInterceptor(preventPublishInterceptor));
     }
 }

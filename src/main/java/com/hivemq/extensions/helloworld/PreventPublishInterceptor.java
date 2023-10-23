@@ -19,10 +19,8 @@ import com.hivemq.extension.sdk.api.annotations.NotNull;
 import com.hivemq.extension.sdk.api.interceptor.publish.PublishInboundInterceptor;
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundInput;
 import com.hivemq.extension.sdk.api.interceptor.publish.parameter.PublishInboundOutput;
+import com.hivemq.extension.sdk.api.packets.publish.AckReasonCode;
 import com.hivemq.extension.sdk.api.packets.publish.ModifiablePublishPacket;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 /**
  * This is a very simple {@link PublishInboundInterceptor},
@@ -31,7 +29,7 @@ import java.nio.charset.StandardCharsets;
  * @author Yannick Weber
  * @since 4.3.1
  */
-public class HelloWorldInterceptor implements PublishInboundInterceptor {
+public class PreventPublishInterceptor implements PublishInboundInterceptor {
 
     @Override
     public void onInboundPublish(
@@ -39,9 +37,14 @@ public class HelloWorldInterceptor implements PublishInboundInterceptor {
             final @NotNull PublishInboundOutput publishInboundOutput) {
 
         final ModifiablePublishPacket publishPacket = publishInboundOutput.getPublishPacket();
-        if ("hello/world".equals(publishPacket.getTopic())) {
-            final ByteBuffer payload = ByteBuffer.wrap("Hello World!".getBytes(StandardCharsets.UTF_8));
-            publishPacket.setPayload(payload);
+        final String clientId = publishInboundInput.getClientInformation().getClientId();
+        final String topic = publishInboundInput.getPublishPacket().getTopic();
+
+        if (clientId.contains("prevent") || topic.contains("prevent")) {
+            // prevent publish delivery on the output object
+            //publishInboundOutput.preventPublishDelivery();
+            //publishInboundOutput.preventPublishDelivery(AckReasonCode.TOPIC_NAME_INVALID);
+            publishInboundOutput.preventPublishDelivery(AckReasonCode.TOPIC_NAME_INVALID, "It is not allowed to publish to topic: " + topic);
         }
     }
 }
